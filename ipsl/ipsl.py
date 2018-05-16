@@ -42,7 +42,7 @@ def _setup_logging(level=logging.INFO):
     return _log
 
 
-log = _setup_logging(level=logging.DEBUG)
+log = _setup_logging(level=logging.ERROR)
 commands = {
     'links': cmd.links,
     'domains': cmd.domains,
