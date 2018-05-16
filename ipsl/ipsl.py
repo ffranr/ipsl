@@ -50,7 +50,11 @@ commands = {
 }
 
 
-if __name__ == '__main__':
+def run():
     args = docopt(__doc__, version='InterPlanetary Soft Links (IPSL) v0.1')
     command = common.utils.select_command(args, commands)
     command.run(args)
+
+
+if __name__ == '__main__':
+    run()
