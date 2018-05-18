@@ -3,7 +3,7 @@ IPSL enables peers to curate a bidirectional [mapping](#content-location-address
 
 Data that is not seeded by an IPFS peer may still be available via a location address. IPSL can be used to exploits this possibility when retrieving data.
 
-**Proof-of-concept.**
+**In its current state, this project is barely a proof-of-concept. It works as described. But it requires optimization and additional unit tests.**
 
 ## Motivation
 
