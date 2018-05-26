@@ -47,6 +47,7 @@ def _dag_put(dag):
     command = ["ipfs", "dag", "put", "--pin"]
     stdout = subprocess.check_output(command, input=dag_json)
     cid = stdout.decode("utf-8")
+    cid = cid.rstrip("\n")
     return cid
 
 
