@@ -10,7 +10,8 @@ setup(name='ipsl',
       install_requires=[
           'ipfsapi >= 0.4.2-1',
           'docopt >= 0.6.2',
-          'simplejson >= 3.13.2'
+          'simplejson >= 3.13.2',
+          'cbor2 >= 4.0.1'
       ],
       entry_points={
           'console_scripts': ['ipsl = ipsl.ipsl:run']

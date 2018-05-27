@@ -3,6 +3,7 @@ import decimal
 import logging
 import subprocess
 
+import cbor2 as cbor
 import simplejson as json
 import ipfsapi
 
@@ -42,10 +43,9 @@ def _start_daemon_connect():
 
 
 def _dag_put(dag):
-    dag_json = json.dumps(dag)
-    dag_json = bytes(dag_json, 'utf8')
-    command = ["ipfs", "dag", "put", "--pin"]
-    stdout = subprocess.check_output(command, input=dag_json)
+    dag = cbor.dumps(dag)
+    command = ["ipfs", "dag", "put", "--pin", "--input-enc=raw"]
+    stdout = subprocess.check_output(command, input=dag)
     cid = stdout.decode("utf-8")
     cid = cid.rstrip("\n")
     return cid
