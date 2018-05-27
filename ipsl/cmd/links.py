@@ -13,30 +13,34 @@ log = logging.getLogger('ipsl')
 
 
 def _parse_protocols(**kw):
-    protocol_addrs = collections.OrderedDict()
+    protocol_info = collections.OrderedDict()
     for protocol in common.protocols:
         address = kw.get(protocol)
         if address is None:
             continue
 
         address = common.utils.clean_address(protocol, address)
+        domain = address.split('/')[0]
         address = quote(address, safe='')
 
-        protocol_addrs[protocol] = address
-    return protocol_addrs
+        protocol_info[protocol] = {
+            'address': address,
+            'domain': domain,
+        }
+    return protocol_info
 
 
-def _get_ipfs_address(protocol_addresses, _map):
-    for protocol, address in protocol_addresses.items():
+def _get_ipfs_address(protocol_info, _map):
+    for protocol, info in protocol_info.items():
         if protocol == 'ipfs':
-            ipfs_address = address
+            ipfs_address = info['address']
             return ipfs_address
 
         protocol_entries = _map.get(protocol)
         if protocol_entries is None:
             continue
 
-        protocol_links = protocol_entries.get(address)
+        protocol_links = protocol_entries.get(info['address'])
         if protocol_links is None:
             continue
 
@@ -57,14 +61,14 @@ def _get_ipfs_links(ipfs_address, _map):
 
 def get(ipfs=None, https=None, ftp=None, quiet=True, **_):
     log.debug("Get links")
-    protocol_addresses = _parse_protocols(ipfs=ipfs, https=https, ftp=ftp)
-    if len(protocol_addresses) < 1:
+    protocol_info = _parse_protocols(ipfs=ipfs, https=https, ftp=ftp)
+    if len(protocol_info) < 1:
         return maps.get(quiet=quiet)
 
-    log.debug("Protocol addresses:\n%s", protocol_addresses)
+    log.debug("Protocol addresses:\n%s", protocol_info)
 
     _map = maps.get()
-    ipfs_address = _get_ipfs_address(protocol_addresses, _map)
+    ipfs_address = _get_ipfs_address(protocol_info, _map)
     _links = _get_ipfs_links(ipfs_address, _map)
     if _links is None:
         return
@@ -78,50 +82,49 @@ def get(ipfs=None, https=None, ftp=None, quiet=True, **_):
     return _links
 
 
-def _add_ipfs_entry(_map, protocol_addrs):
+def _add_ipfs_entry(_map, protocol_info):
     location_protocols_mapping = {
-        _protocol: _addr
-        for _protocol, _addr in protocol_addrs.items()
-        if _protocol != 'ipfs' and _addr is not None
+        _protocol: info['address']
+        for _protocol, info in protocol_info.items()
+        if _protocol != 'ipfs'
     }
-    entry = {protocol_addrs['ipfs']: location_protocols_mapping}
+    entry = {protocol_info['ipfs']['address']: location_protocols_mapping}
     _map['ipfs'].update(entry)
     return _map
 
 
-def _add_protocol_entries(_map, protocol_addrs):
-    _map = _add_ipfs_entry(_map, protocol_addrs)
-    for protocol, address in protocol_addrs.items():
+def _add_protocol_entries(_map, protocol_info):
+    _map = _add_ipfs_entry(_map, protocol_info)
+    for protocol, info in protocol_info.items():
         if protocol == 'ipfs':
             continue
-        entry = {address: {'ipfs': protocol_addrs['ipfs']}}
+        entry = {info['address']: {'ipfs': protocol_info['ipfs']['address']}}
         _map[protocol].update(entry)
     return _map
 
 
-def _strip_domains(protocol_addrs):
+def _strip_domains(protocol_info):
     all_domains = set()
-    for protocols, address in protocol_addrs.items():
+    for protocols, info in protocol_info.items():
         if protocols == 'ipfs':
             continue
-        domain = address.split('/')[0]
-        all_domains.add(domain)
+        all_domains.add(info['domain'])
     return all_domains
 
 
 def add(ipfs=None, https=None, ftp=None, **_):
     log.debug("Add links")
-    protocol_addrs = _parse_protocols(ipfs=ipfs, https=https, ftp=ftp)
-    assert 'ipfs' in protocol_addrs
-    if len(protocol_addrs) < 2:
+    protocol_info = _parse_protocols(ipfs=ipfs, https=https, ftp=ftp)
+    assert 'ipfs' in protocol_info
+    if len(protocol_info) < 2:
         raise ValueError("At least two protocol addresses required")
-    log.debug("Protocol addresses:\n%s", protocol_addrs)
+    log.debug("Protocol addresses:\n%s", protocol_info)
 
     _map = maps.get()
-    _map = _add_protocol_entries(_map, protocol_addrs)
+    _map = _add_protocol_entries(_map, protocol_info)
     maps.put(_map)
 
-    for domain in _strip_domains(protocol_addrs):
+    for domain in _strip_domains(protocol_info):
         domains.add(seen=domain)
 
 
